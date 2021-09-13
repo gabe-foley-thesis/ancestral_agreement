@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block head %}
+{{ super() }}
+<script src="/static/js/jquery.repeatable.js"></script>
+
+
+{% endblock %}
+
+
+{% block page_content %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+
+    <div id="form_div">
+
+<form method="POST"    enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+    {%  if error %}
+        <p class="error-message"> {{ error }}</p>
+    {% endif %}
+
+
+  <fieldset class="todos_labels">
+
+    <div class="repeatable"></div>
+
+    <input type="button" value="Add another dataset" class="add">
+
+	  <input type="submit" value="Calculate Ancestral Agreement" class="submit">
+
+
+  </fieldset>
+
+</form>
+
+<script type="text/template" id="todos_labels">
+  <div class="field-group">
+
+	  <label for="name_{?}">Dataset name</label>
+	  <input type="text" name="input[{?}][name]" value="{name}" id="name_{?}" >
+	  <br>
+
+    <label for="aln_{?}">Alignment file (must include ancestral sequences)</label>
+    <input type="file" name="input[{?}][aln]" value="{aln}" id="aln_{?}" >
+	  <br>
+
+    <label for="tree_{?}">Tree file (must include labelled ancestral nodes)</label>
+    <input type="file" name="input[{?}][tree]" value="{aln}" id="tree_{?}" >
+	  <br>
+
+    <input type="button" class="delete" value="Remove">
+	  <br>
+	  <br>
+
+  </div>
+
+
+</script>
+
+<script>
+
+	$(".todos_labels .repeatable").repeatable({
+  addTrigger: ".todos_labels .add",
+  deleteTrigger: ".todos_labels .delete",
+  template: "#todos_labels",
+		min: 2
+});
+</script>
+    </div>
+
+            <div id="image_div">
+
+        <img src="./static/images/ross_barnard_2019.jpeg" />
+                <br>
+
+    “From generation to generation“ . Pencil, ink, and acrylic on canvas. 2019 &copy; Ross Barnard
+
+</div>
+
+
+
+
+{% endblock %}

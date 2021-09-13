@@ -1,0 +1,64 @@
+{% extends "bootstrap/base.html" %}
+{% block title %}
+Ancestral Agreement
+{% endblock %}
+{% block head %}
+{{ super() }}
+
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
+    <script src="/static/jquery.bootgrid.min.js"></script>
+    <link href="/static/jquery.bootgrid.min.css" rel="stylesheet">
+    <link href="/static/jquery-ui.min.css" rel="stylesheet">
+    <link href="/static/css/main.css" rel="stylesheet">
+
+<link href="/static/jquery-ui.structure.min.css" rel="stylesheet">
+<link href="/static/jquery-ui.theme.min.css" rel="stylesheet">
+
+<script src="/static/jquery-ui.min.js"></script>
+
+<script src="/static/jquery.bootgrid.fa.min.js"></script>
+
+<script src="/static/js/repeatable-fields.js"></script>
+
+
+{% endblock %}
+{% block navbar %}
+<body style='font-family: "Microsoft YaHei", "Arial", "Verdana", "Tahoma"'>
+<div id="navbar_title" class="navbar navbar-inverse" role="navigation" >
+    <div class="container nav-container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="{{ url_for('index') }}">Ancestral Agreement</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+            </ul>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+
+<div class="container">
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% block page_content %}{% endblock %}
+</div>
+{% endblock %}
+</body>
+
+
+
