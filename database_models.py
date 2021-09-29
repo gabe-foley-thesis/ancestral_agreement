@@ -1,3 +1,6 @@
+"""
+Model for storing the data in the database
+"""
 from mongoengine import *
 
 
@@ -10,3 +13,4 @@ class DataStore(DynamicDocument):
     child_order = ListField()
     child_count = ListField()
     node_dict = DictField()
+    tree_path = StringField(max_length=1000)

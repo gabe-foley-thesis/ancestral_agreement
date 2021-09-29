@@ -19,9 +19,6 @@ from wtforms.validators import DataRequired, Email
 from gettext import gettext
 
 
-# Create models
-
-
 class BlobUploadField(fields.StringField):
     widget = FileInput()
 
@@ -126,50 +123,50 @@ class UploadForm(FlaskForm):
     upload_submit = SubmitField("Upload file")
 
 
-# CAUTION: Untested code ahead
-class If(object):
-    def __init__(self, parent, run_validation=None, extra_validators=None, msg=None):
-        self.parent = parent
-        self.msg = msg if msg is not None else u"Invalid"
-        if callable(run_validation):
-            self.run_validation = run_validation
-        else:
-            _run_validation = lambda self, parent, form: parent.data == run_validation
-            self.run_validation = _run_validation
-        self.extra_validators = extra_validators if extra_validators is not None else []
-
-    def __call__(self, field, form):
-        parent = getattr(form, self.parent)
-        if self.run_validation(parent, form):
-            return field.validate(form, extra_validators=self.extra_validators)
-
-
-class ContactForm(FlaskForm):
-    name = StringField("Name", validators=[DataRequired()])
-    contact_type = SelectField(
-        "Contact Type",
-        validators=[DataRequired()],
-        choices=[
-            ("email", "Email"),
-            ("phone", "Phone Number"),
-            ("im", "Instant Message"),
-        ],
-    )
-    # `If` is a custom validator - see below
-    email_address = StringField(
-        "Email", validators=[If("contact_type", "email", [DataRequired(), Email()])]
-    )
-    phone_number = StringField(
-        "Phone #", validators=[If("contact_type", "phone", [DataRequired()])]
-    )
-    im_handle = StringField(
-        "IM Handle", validators=[If("contact_type", "im", [DataRequired()])]
-    )
-
-
-class SignUpForm(FlaskForm):
-    # Other fields go here
-    contacts = FieldList(FormField(ContactForm))
+# # CAUTION: Untested code ahead
+# class If(object):
+#     def __init__(self, parent, run_validation=None, extra_validators=None, msg=None):
+#         self.parent = parent
+#         self.msg = msg if msg is not None else u"Invalid"
+#         if callable(run_validation):
+#             self.run_validation = run_validation
+#         else:
+#             _run_validation = lambda self, parent, form: parent.data == run_validation
+#             self.run_validation = _run_validation
+#         self.extra_validators = extra_validators if extra_validators is not None else []
+#
+#     def __call__(self, field, form):
+#         parent = getattr(form, self.parent)
+#         if self.run_validation(parent, form):
+#             return field.validate(form, extra_validators=self.extra_validators)
+#
+#
+# class ContactForm(FlaskForm):
+#     name = StringField("Name", validators=[DataRequired()])
+#     contact_type = SelectField(
+#         "Contact Type",
+#         validators=[DataRequired()],
+#         choices=[
+#             ("email", "Email"),
+#             ("phone", "Phone Number"),
+#             ("im", "Instant Message"),
+#         ],
+#     )
+#     # `If` is a custom validator - see below
+#     email_address = StringField(
+#         "Email", validators=[If("contact_type", "email", [DataRequired(), Email()])]
+#     )
+#     phone_number = StringField(
+#         "Phone #", validators=[If("contact_type", "phone", [DataRequired()])]
+#     )
+#     im_handle = StringField(
+#         "IM Handle", validators=[If("contact_type", "im", [DataRequired()])]
+#     )
+#
+#
+# class SignUpForm(FlaskForm):
+#     # Other fields go here
+#     contacts = FieldList(FormField(ContactForm))
 
 
 # Form for uploading files

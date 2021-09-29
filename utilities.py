@@ -7,9 +7,6 @@ import pickle
 import ete3
 import numpy
 
-Entrez.email = "gabriel.foley@uqconnect.edu.au"
-
-
 def load_sequences(*args, split_char=""):
     """
     Join multiple sequence files together

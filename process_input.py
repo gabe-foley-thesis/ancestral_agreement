@@ -70,7 +70,3 @@ def get_input(uploads):
 
 
     return trees
-
-    #
-    # grasp_tree = PhyloTree("./Files/Test/Finals/GRASP_ancestors_6.nwk",
-    #                        alignment="./Files/Test/Finals/GRASP_ancestors_6.aln", format=1, alg_format="fasta")

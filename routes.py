@@ -1,44 +1,40 @@
-import ancestral_agreement
-from models import UploadForm, StaticUploadForm, SignUpForm, ContactForm
+import datetime
+import os
+import random
+import string
+import time
+import dash
+import dash_bootstrap_components as dbc
+import numpy as np
+import plotly.graph_objs as go
+from Bio import Phylo
+from dash import dcc
+from dash import html
+from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
+from ete3 import PhyloTree
 from flask import (
     Flask,
     render_template,
     request,
-    session,
     redirect,
     url_for,
-    send_file,
     session,
 )
 from flask_bootstrap import Bootstrap
-import io
-import base64
-import matplotlib.pyplot as plt
-import urllib.parse
-
-# import process_input
-import dash
-from dash import dcc
-from dash import html
-import dash_bootstrap_components as dbc
-import datetime
-from mongoengine import connect
-import configs.mongoconfig
 from flask_mongoengine import MongoEngine
-from database_models import DataStore
-from ete3 import PhyloTree
+from mongoengine import connect
 from werkzeug.utils import secure_filename
-import os
-from dash.dependencies import Input, Output, State
-from dash.exceptions import PreventUpdate
-import pandas as pd
-import numpy as np
-import plotly.graph_objs as go
-import random
-import tree_plot
+
+import ancestral_agreement
 import ancestral_agreement_plot
-import string
-import time
+import configs.mongoconfig
+from database_models import DataStore
+from models import UploadForm
+
+from tree_plot import TreePlot
+
+
 
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
@@ -51,12 +47,12 @@ app_dash = dash.Dash(
 
 app.config.from_pyfile("configs/mongoconfig.py")
 
-
 # Connect the database
 db = MongoEngine(app)
 connect(configs.mongoconfig.MONGODB_DB)
 
 app_dash.scripts.config.serve_locally = True
+
 
 def parse_contents(contents, filename, date):
     return html.Div(
@@ -96,8 +92,14 @@ _navbar = dbc.Navbar(
     dark=True,
 )
 
-
 dataset_names = ["Data not loaded", "Data not loaded"]
+
+
+print ("Loading example data")
+curr_tree_plot = TreePlot(os.getcwd() + "/files/test_ancestors_6.nwk")
+curr_aa_plot = ancestral_agreement_plot.AncestralAgreementPlot(os.getcwd() + '/files/test_ancestors_6.nwk')
+
+
 
 app_dash.layout = html.Div(
     [
@@ -129,7 +131,7 @@ app_dash.layout = html.Div(
                     value=" Molecular weight",
                     labelStyle={"display": "inline-block", "padding": "5px"},
                 ),
-                ancestral_agreement_plot.fb_plot,
+                curr_aa_plot.aa_plot,
                 dcc.RadioItems(
                     id="order",
                     options=[
@@ -148,20 +150,20 @@ app_dash.layout = html.Div(
                     clear_on_unhover=True,
                     figure=go.FigureWidget(
                         data=[
-                            tree_plot.trace_radial_lines,
-                            tree_plot.trace_arcs,
-                            tree_plot.trace_nodes,
+                            curr_tree_plot.trace_radial_lines,
+                            curr_tree_plot.trace_arcs,
+                            curr_tree_plot.trace_nodes,
                         ],
-                        layout=tree_plot.layout,
+                        layout=curr_tree_plot.layout,
                     ),
                 )
             ],
             style={"width": "48%", "float": "right", "display": "inline-block"},
         ),
         dcc.Store(id="master_nodes", storage_type="session"),
-        dcc.Store(id="fb_hover", storage_type="session"),
+        dcc.Store(id="aa_hover", storage_type="session"),
         dcc.Store(id="tree_hover", storage_type="session"),
-        dcc.Store(id="fb_select", storage_type="session"),
+        dcc.Store(id="aa_select", storage_type="session"),
         dcc.Store(id="tree_select", storage_type="session"),
     ],
     style={"padding": 10},
@@ -171,7 +173,6 @@ app_dash.title = "Ancestral Agreement"
 
 
 def get_node_name(node):
-
     if not node:
         return None
     names = []
@@ -194,10 +195,11 @@ def get_node_name(node):
 
 
 @app_dash.callback(
-    Output("fb_hover", "data"),
+    Output("aa_hover", "data"),
     [Input(component_id="ancestral_agreement_plot", component_property="hoverData")],
 )
-def update_fb_storage(data):
+def update_aa_storage(data):
+    """ Update the nodes hovered over in the Ancestral Agreement plot"""
     return data
 
 
@@ -206,6 +208,7 @@ def update_fb_storage(data):
     [Input(component_id="tree_plot", component_property="hoverData")],
 )
 def update_tree_storage(data):
+    """ Update the nodes hovered over in the phylogenetic tree"""
     return get_node_name(data)
 
 
@@ -213,13 +216,14 @@ def update_tree_storage(data):
 
 
 @app_dash.callback(
-    Output("fb_select", "data"),
+    Output("aa_select", "data"),
     [Input(component_id="ancestral_agreement_plot", component_property="selectedData")],
-    [State("fb_select", "data")],
+    [State("aa_select", "data")],
 )
-def update_fb_storage(fb_data, fb_current):
-    node_names = get_node_name(fb_data)
-    if node_names == fb_current:
+def update_aa_storage(aa_data, aa_current):
+    """ Update the nodes selected in the Ancestral Agreement plot"""
+    node_names = get_node_name(aa_data)
+    if node_names == aa_current:
         return []
     return node_names
 
@@ -238,46 +242,46 @@ def update_tree_storage(data):
 @app_dash.callback(
     Output("master_nodes", "data"),
     [
-        Input("fb_hover", "modified_timestamp"),
+        Input("aa_hover", "modified_timestamp"),
         Input("tree_hover", "modified_timestamp"),
-        Input("fb_select", "modified_timestamp"),
+        Input("aa_select", "modified_timestamp"),
         Input("tree_select", "modified_timestamp"),
     ],
     [
-        State("fb_hover", "data"),
+        State("aa_hover", "data"),
         State("tree_hover", "data"),
-        State("fb_select", "data"),
+        State("aa_select", "data"),
         State("tree_select", "data"),
         State("master_nodes", "data"),
     ],
 )
 def update_master_div(
-    fb_hover_ts,
-    tree_hover_ts,
-    fb_select_ts,
-    tree_select_ts,
-    fb_hover_data,
-    tree_hover_data,
-    fb_select_data,
-    tree_select_data,
-    master_select_data,
+        aa_hover_ts,
+        tree_hover_ts,
+        aa_select_ts,
+        tree_select_ts,
+        aa_hover_data,
+        tree_hover_data,
+        aa_select_data,
+        tree_select_data,
+        master_select_data,
 ):
-    if None in (fb_hover_ts, tree_hover_ts, fb_select_ts, tree_select_ts):
+    if None in (aa_hover_ts, tree_hover_ts, aa_select_ts, tree_select_ts):
         raise PreventUpdate
 
     else:
-        most_recent = max(fb_hover_ts, tree_hover_ts, fb_select_ts, tree_select_ts)
+        most_recent = max(aa_hover_ts, tree_hover_ts, aa_select_ts, tree_select_ts)
         latest = None
 
-        if most_recent == fb_hover_ts:
+        if most_recent == aa_hover_ts:
 
-            if fb_hover_data:
-                latest = get_node_name(fb_hover_data)
-                if fb_select_data:
-                    latest += [x for x in fb_select_data if x not in latest]
+            if aa_hover_data:
+                latest = get_node_name(aa_hover_data)
+                if aa_select_data:
+                    latest += [x for x in aa_select_data if x not in latest]
 
-            if not fb_hover_data:
-                latest = fb_select_data
+            if not aa_hover_data:
+                latest = aa_select_data
 
         if most_recent == tree_hover_ts:
 
@@ -289,14 +293,12 @@ def update_master_div(
             if not tree_hover_data:
                 latest = tree_select_data
 
-        if most_recent == fb_select_ts:
-
-            latest = fb_select_data
+        if most_recent == aa_select_ts:
+            latest = aa_select_data
 
             return latest
 
         if most_recent == tree_select_ts:
-
             latest = tree_select_data
 
             return latest
@@ -314,16 +316,27 @@ def update_master_div(
     ],
 )
 def update_tree(master_data, first_dataset, second_dataset, metric):
+    print('update tree was called')
+    print(master_data)
+    print(first_dataset)
+    print(second_dataset)
+    print(metric)
 
-    print ('update tree called')
-    print (metric)
+    print(session.get("data_generated"))
+
+    curr_data = DataStore.objects().get(session_token=session["data_generated"])
+    print ('camo damo')
+
+    curr_tree_plot = TreePlot(curr_data.tree_path)
+
+    print('updated tree plot nodes was ')
 
     if session.get("data_generated") is None or None in (first_dataset, second_dataset):
         raise PreventUpdate
     traces = []
 
     if not master_data:
-        highlight_nodes = ["green" for x in tree_plot.colour]
+        highlight_nodes = ["green" for x in curr_tree_plot.colour]
 
         print(
             f"I am here and first is {first_dataset} and second is {second_dataset} and metric is {metric}"
@@ -331,15 +344,22 @@ def update_tree(master_data, first_dataset, second_dataset, metric):
 
     else:
 
-        highlight_nodes = tree_plot.colour[:]
+        print('master data was set')
+        print(master_data)
+
+        highlight_nodes = curr_tree_plot.colour[:]
         curr = time.time()
 
         for node_name in master_data:
 
-            if node_name in ancestral_agreement_plot.node_names:
+            if node_name in curr_aa_plot.node_names:
+
+                print (node_name)
+                print (curr_tree_plot.tree_nodes)
+                print (highlight_nodes)
 
                 # Update the selected node to be a different colour
-                highlight_nodes[tree_plot.tree_nodes[node_name]] = "red"
+                highlight_nodes[curr_tree_plot.tree_nodes[node_name]] = "red"
 
                 next = time.time()
 
@@ -348,32 +368,36 @@ def update_tree(master_data, first_dataset, second_dataset, metric):
 
         print("Time elapsed was ", next - curr)
 
+    print ('current tree plot is ')
+    print (curr_tree_plot)
+    print (curr_tree_plot.tree_nodes)
+
     highlighted_trace_nodes = dict(
         type="scatter",
-        x=tree_plot.xnodes,
-        y=tree_plot.ynodes,
+        x=curr_tree_plot.xnodes,
+        y=curr_tree_plot.ynodes,
         mode="markers",
         marker=dict(
             color=highlight_nodes,
-            size=tree_plot.size,
-            colorscale=tree_plot.pl_colorscale,
+            size=curr_tree_plot.size,
+            colorscale=curr_tree_plot.pl_colorscale,
         ),
-        text=tree_plot.tooltip,
+        text=curr_tree_plot.tooltip,
         hoverinfo="text",
         opacity=1,
     )
 
     traces.append(
-        [tree_plot.trace_radial_lines, tree_plot.trace_arcs, highlighted_trace_nodes]
+        [curr_tree_plot.trace_radial_lines, curr_tree_plot.trace_arcs, highlighted_trace_nodes]
     )
 
     return go.FigureWidget(
         data=[
-            tree_plot.trace_radial_lines,
-            tree_plot.trace_arcs,
+            curr_tree_plot.trace_radial_lines,
+            curr_tree_plot.trace_arcs,
             highlighted_trace_nodes,
         ],
-        layout=tree_plot.layout,
+        layout=curr_tree_plot.layout,
     )
 
 
@@ -391,56 +415,66 @@ def update_tree(master_data, first_dataset, second_dataset, metric):
         State("ancestral_agreement_plot", "figure"),
     ],
 )
-def update_fb_plot(
-    master_nodes,
-    first_dataset,
-    second_dataset,
-    metric,
-    order,
-    relayout_data,
-    curr_fb_plot,
+def update_aa_plot(
+        master_nodes,
+        first_dataset,
+        second_dataset,
+        metric,
+        order,
+        relayout_data,
+        aa_layout,
 ):
+    print('here we go')
 
-    if first_dataset == "Data not loaded":
+    if first_dataset == "Data not loaded" or second_dataset == "Data not loaded":
         raise PreventUpdate
     # session["data_generated"] = "560A76BR5L8IE61E5QB7" # cyp2u
     # session["data_generated"] = "CH24A0R3DXLBO1YBO0SD" # small
     # session["data_generated"] = "MGILZ691OLM04XNMAXKA" # latest
 
+
+
     if session.get("data_generated") is None:
         print("no data generated")
         raise PreventUpdate
-    # print ('dataset names is ', dataset_names)
+
+    curr_data = DataStore.objects().get(session_token=session["data_generated"])
+    curr_aa_plot = ancestral_agreement_plot.AncestralAgreementPlot(curr_data.tree_path)
 
     if not master_nodes:
-        highlight_nodes = ancestral_agreement_plot.node_colours[:]
+        highlight_nodes = curr_aa_plot.node_colours[:]
 
     else:
 
-        highlight_nodes = ancestral_agreement_plot.node_colours[:]
+        highlight_nodes = curr_aa_plot.node_colours[:]
 
         for node_name in master_nodes:
 
-            if node_name in ancestral_agreement_plot.node_names:
+            if node_name in curr_aa_plot.node_names:
 
-                highlight_nodes[ancestral_agreement_plot.node_dict[node_name]] = "red"
+                highlight_nodes[curr_aa_plot.node_dict[node_name]] = "red"
 
             else:
                 raise PreventUpdate
 
-    current_data = DataStore.objects(session_token=session["data_generated"])[0]
+    print('update aa plot called')
+
+    print(session)
+    print(session["data_generated"])
+
+    current_data = DataStore.objects().get(session_token=str(session["data_generated"].strip()))
 
     print('heres da current dict')
 
-    print ('and the metric we want is ', metric )
+    print('and the metric we want is ', metric)
 
-    print ('and the order we want is ', order)
+    print('and the order we want is ', order)
 
-    print ('and the two datasets we want are ', first_dataset + " " + second_dataset)
+    print('and the two datasets we want are ', first_dataset + " " + second_dataset)
 
     print(current_data)
 
-    print(current_data.data_dict)
+    print(current_data.data)
 
     print("order is ", order)
 
@@ -453,32 +487,49 @@ def update_fb_plot(
         count = current_data.child_count
         count_order = current_data.child_order
 
-    print ('Check values here')
+    print('Check values here')
 
-    print (current_data.data_dict.keys())
-    print (current_data.data_dict.values())
+    print(current_data.data.keys())
+    print(current_data.data.values())
 
-    metric1 = np.array(current_data.data_dict[first_dataset][metric.strip() + suffix])
-    metric2 = np.array(current_data.data_dict[second_dataset][metric.strip() + suffix])
+    print (first_dataset)
+
+    print(current_data.data[first_dataset])
+
+    print (second_dataset)
+    print (current_data.data[second_dataset])
+
+    metric1 = np.array(current_data.data[first_dataset][metric.strip() + suffix])
+    metric2 = np.array(current_data.data[second_dataset][metric.strip() + suffix])
+
+    print (metric1)
+
+    print (metric2)
+
+    # tree = Phylo.read(os.getcwd() + "/files/test_ancestors_6.nwk", "newick")
+    # phylo_tree = PhyloTree(os.getcwd() + "/files/test_ancestors_6.nwk", format=1)
+    #
+    # # print(phylo_tree)
 
     # Get the layout for the plot
-    current_layout = ancestral_agreement_plot.generate_plot(
-        metric1,
-        metric2,
-        first_dataset,
-        second_dataset,
-        4,
-        count,
-        count_order,
-        1.96,
-        metric,
-        order,
-        highlight_nodes,
-    )
+
+    print ('highlight nodes')
+    print (highlight_nodes)
+
+    current_layout = curr_aa_plot.generate_plot(metric1,
+                                           metric2,
+                                           first_dataset,
+                                           second_dataset,
+                                           4,
+                                           count,
+                                           count_order,
+                                           1.96,
+                                           metric,
+                                           order,
+                                           highlight_nodes)
 
     # Keep the drag mode as whatever the user has selected
     if relayout_data and "dragmode" in relayout_data:
-
         current_layout[1].dragmode = relayout_data["dragmode"]
 
     if relayout_data and "xaxis.range[0]" in relayout_data:
@@ -503,13 +554,10 @@ def update_fb_plot(
     [dash.dependencies.Input("second_dataset_dropdown", "value")],
 )
 def set_first_dropdown(exclude):
-
     if session.get("data_generated") is not None:
-        print("was not none")
+        print(session.get("data_generated"))
 
-        print (session.get("data_generated") )
-
-        current_data = DataStore.objects(session_token=session["data_generated"])[0]
+        current_data = DataStore.objects().get(session_token=session["data_generated"])
 
         # current_data_frame = pd.DataFrame.from_dict(current_data.data_dict, orient="index")
 
@@ -517,7 +565,7 @@ def set_first_dropdown(exclude):
 
         dataset_names = current_data.names
 
-        print (dataset_names)
+        print(dataset_names)
 
         return [{"label": i, "value": i} for i in dataset_names if i != exclude]
     else:
@@ -529,10 +577,9 @@ def set_first_dropdown(exclude):
     [dash.dependencies.Input("first_dataset_dropdown", "value")],
 )
 def set_second_dropdown(exclude):
-
     if session.get("data_generated") is not None:
 
-        current_data = DataStore.objects(session_token=session["data_generated"])[0]
+        current_data = DataStore.objects().get(session_token=session["data_generated"])
 
         # current_data_frame = pd.DataFrame.from_dict(current_data.data_dict, orient="index")
 
@@ -552,12 +599,12 @@ app.config.update(
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    """ Defines the index page of the dash app"""
 
     form = UploadForm()
     if request.method == "POST":
 
         if len(request.files) < 4:
-
             # print ('length too short')
             # print (form)
             return render_template(
@@ -570,7 +617,8 @@ def index():
 
         saved_files = save_files(request.files)
 
-        trees = get_input(saved_files)
+        trees, tree_path = get_input(saved_files)
+
 
         print("names is {} and trees is {}".format(names, trees))
 
@@ -607,15 +655,14 @@ def index():
             child_order=child_order,
             child_count=child_count,
             node_dict=node_dict,
+            tree_path = tree_path
         )
         data_store.save()
-        current_data = DataStore.objects(session_token=session_token)
+        current_data = DataStore.objects().get(session_token=session_token)
 
-        print ('hoggles')
+        print('hoggles')
 
         print(current_data)
-
-
 
         # for rec in current_data:
         #     current_data_frame = pd.DataFrame.from_dict(rec.data_dict, orient="index")
@@ -624,11 +671,6 @@ def index():
 
     elif request.method == "GET":
         return render_template("index.html", form=form)
-
-
-@app.route("/about")
-def about():
-    return render_template("about.html")
 
 
 UPLOAD_FOLDER = os.getcwd() + "/static/uploads/"
@@ -648,7 +690,7 @@ def get_names(form):
     print(len(form))
     print(len(form) / 2)
     for idx in range(
-        0, int(len(form) - 1)
+            0, int(len(form) - 1)
     ):  # Magic number 1 corrects for csrf_token stored in the form
         print(idx)
         print(form["input[new" + str(idx) + "][name]"])
@@ -668,7 +710,6 @@ def save_files(uploads):
     path_dict = {}
 
     for path, file in uploads.items():
-
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         path_dict[path] = filename
@@ -684,13 +725,15 @@ def get_input(uploads):
         print(idx)
         print(uploads["input[new" + str(idx) + "][tree]"])
         print(uploads["input[new" + str(idx) + "][aln]"])
+
+        tree_path = os.path.join(
+                app.config["UPLOAD_FOLDER"], uploads["input[new" + str(idx) + "][tree]"])
+        aln_path = os.path.join (app.config["UPLOAD_FOLDER"], uploads["input[new" + str(idx) + "][aln]"]
+            )
+
         tree = PhyloTree(
-            os.path.join(
-                app.config["UPLOAD_FOLDER"], uploads["input[new" + str(idx) + "][tree]"]
-            ),
-            alignment=os.path.join(
-                app.config["UPLOAD_FOLDER"], uploads["input[new" + str(idx) + "][aln]"]
-            ),
+            tree_path,
+            alignment=aln_path,
             format=1,
             alg_format="fasta",
         )
@@ -699,7 +742,7 @@ def get_input(uploads):
 
         trees.append(tree)
 
-    return trees
+    return trees, tree_path
 
     #
     # grasp_tree = PhyloTree("./Files/Test/Finals/GRASP_ancestors_6.nwk",
