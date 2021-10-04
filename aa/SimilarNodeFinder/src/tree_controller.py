@@ -1,4 +1,3 @@
-
 from SimilarNodeFinder.src.tree_node_object import TreeNodeObject
 
 

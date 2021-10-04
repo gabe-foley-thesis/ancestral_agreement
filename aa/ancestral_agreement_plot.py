@@ -5,6 +5,7 @@ import plotly.graph_objs as go
 from dash import dcc
 from ete3 import PhyloTree
 
+
 class AncestralAgreementPlot:
     node_dict = {}
     node_colours = []
@@ -14,7 +15,7 @@ class AncestralAgreementPlot:
         go.Scattergl(
             x=random_x,
             y=random_y,
-            text='',
+            text="",
             mode="markers",
             marker=dict(
                 size=12,
@@ -72,24 +73,25 @@ class AncestralAgreementPlot:
                     self.node_colours.append("green")
                     count += 1
 
-        print ('init called')
-        print (self.node_names)
+        print("init called")
+        print(self.node_names)
 
     active_node = None
 
-    def generate_plot(self,
-                      metric1,
-                      metric2,
-                      name1,
-                      name2,
-                      data_len,
-                      count,
-                      count_order,
-                      metric_lims,
-                      metric_name,
-                      order_name,
-                      highlight_nodes
-                      ):
+    def generate_plot(
+        self,
+        metric1,
+        metric2,
+        name1,
+        name2,
+        data_len,
+        count,
+        count_order,
+        metric_lims,
+        metric_name,
+        order_name,
+        highlight_nodes,
+    ):
 
         if len(metric1) != len(metric2):
             raise ValueError("m1 does not have the same length as m2.")
@@ -155,8 +157,8 @@ class AncestralAgreementPlot:
         return (data, layout)
 
     def get_node_names(self):
-        print ('lets return them ')
-        print (self.node_names)
+        print("lets return them ")
+        print(self.node_names)
         return self.node_names
 
     def update_plot(self, highlight_nodes):

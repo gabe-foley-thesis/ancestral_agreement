@@ -37,11 +37,6 @@ class TreePlot:
         [1.0, "orange"],
     ]
 
-
-
-
-
-
     layout = dict(
         title="Phylogenetic Tree",
         font=dict(family="Balto", size=14),
@@ -56,7 +51,6 @@ class TreePlot:
         plot_bgcolor="rgb(245,245,245)",
     )
 
-
     def __init__(self, tree_path):
 
         self.colour = []
@@ -65,27 +59,24 @@ class TreePlot:
 
         if tree_path:
 
-            # print ('making tree')
             tree = Phylo.read(tree_path, "newick")
-            # phylo_tree = PhyloTree(treepath, format=1)
-
 
             idx = 0
             for clade in tree.get_nonterminals(order="preorder"):
                 self.tree_nodes[clade.name] = idx
 
                 if clade.name and clade.confidence and clade.branch_length:
-                    # tooltip.append(f"id: {clade.id}<br>name: {clade.name}<br>branch-length: {clade.branch_length} <br>confidence: {int(clade.confidence.value)}")
                     self.colour.append[clade.confidence.value]
                 elif (
-                        clade.name is None
-                        and clade.branch_length is not None
-                        and clade.confidence is not None
+                    clade.name is None
+                    and clade.branch_length is not None
+                    and clade.confidence is not None
                 ):
                     self.colour.append(clade.confidence.value)
-                    # tooltip.append(f"id: {clade.id}<br>branch-length: {clade.branch_length}<br>confidence: {int(clade.confidence.value)}")
                 elif clade.name and clade.branch_length and clade.confidence is None:
-                    self.tooltip.append(f"name: {clade.name}<br>branch-length: {clade.branch_length}")
+                    self.tooltip.append(
+                        f"name: {clade.name}<br>branch-length: {clade.branch_length}"
+                    )
                     self.colour.append("green")
                 else:
                     self.tooltip.append(f"name: {clade.name}<br>")
@@ -94,7 +85,14 @@ class TreePlot:
 
                 self.size = [9 if c != -1 else 7 for c in self.colour]
 
-            self.xnodes, self.ynodes, self.xlines, self.ylines, self.xarc, self.yarc = empet_tree.get_circular_tree_data(
+            (
+                self.xnodes,
+                self.ynodes,
+                self.xlines,
+                self.ylines,
+                self.xarc,
+                self.yarc,
+            ) = empet_tree.get_circular_tree_data(
                 tree, order="preorder", start_leaf="last"
             )
 
@@ -112,7 +110,9 @@ class TreePlot:
             x=self.xnodes,
             y=self.ynodes,
             mode="markers",
-            marker=dict(color=self.colour, size=self.size, colorscale=self.pl_colorscale),
+            marker=dict(
+                color=self.colour, size=self.size, colorscale=self.pl_colorscale
+            ),
             text=self.tooltip,
             hoverinfo="text",
             opacity=1,
@@ -126,14 +126,3 @@ class TreePlot:
             line=dict(color="rgb(20,20,20)", width=1),
             hoverinfo="none",
         )
-
-
-
-
-
-
-
-
-
-
-

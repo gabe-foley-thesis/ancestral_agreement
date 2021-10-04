@@ -7,6 +7,7 @@ import pickle
 import ete3
 import numpy
 
+
 def load_sequences(*args, split_char=""):
     """
     Join multiple sequence files together

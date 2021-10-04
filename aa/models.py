@@ -94,7 +94,6 @@ class UploadForm(FlaskForm):
         "Alignment file (must contain ancestral sequences)", [DataRequired()]
     )
 
-
     upload_submit = SubmitField("Upload file")
 
 

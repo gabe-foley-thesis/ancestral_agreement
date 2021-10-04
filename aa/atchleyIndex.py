@@ -1,7 +1,6 @@
 import pandas as pd
 
 
-
 # Calculated Atchley index for each amino acid
 def get_atchley_index_for_seq(seq, index):
     df = pd.DataFrame(

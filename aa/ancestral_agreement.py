@@ -295,13 +295,9 @@ def map_internal_gap_patterns(seqs_gaps, seqs_wo_gaps, outpath=None, gaps2wo=Non
                     updated_joint += pos[1]
 
             if gaps2wo != None:
-                seqs_wo_gaps[gaps2wo[x]].seq = Seq(
-                    updated_joint
-                )
+                seqs_wo_gaps[gaps2wo[x]].seq = Seq(updated_joint)
             else:
-                seqs_wo_gaps[x].seq = Seq(
-                    updated_joint
-                )
+                seqs_wo_gaps[x].seq = Seq(updated_joint)
 
     results = [x for x in seqs_wo_gaps.values()]
 

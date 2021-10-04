@@ -7,7 +7,6 @@ import empet_tree
 import os
 
 
-
 # tree = Phylo.read(os.getcwd() + '/files/bcl.xml', 'phyloxml')
 tree = Phylo.read(os.getcwd() + "/files/test_ancestors_6.nwk", "newick")
 phylo_tree = PhyloTree(os.getcwd() + "/files/test_ancestors_6.nwk", format=1)
