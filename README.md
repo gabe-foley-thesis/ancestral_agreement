@@ -15,10 +15,15 @@ You can try this out in a docker instance. This will setup the Mongo database an
 
 ```
 git clone github.com/gfoley/ancestral_agreement
+cd ancestral_agreement
 docker-compose up
 ```
 
-You can now open a web browser and enter - 
+You can now open a web browser and go to localhost:5000 - 
+
+This gives you the upload form which you can enter your data into.
+
+If you just want to view the example data then navigate to localhost:5000/dash and it will load automatically
 
 Inputs required are a phylogenetic tree labelled with ancestral node positions (Newick format) and two sets of ancestor sequences from different prediction methods / settings that correspond to the labelled ancestral node positions (FASTA format). 
 
