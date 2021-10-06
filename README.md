@@ -13,6 +13,8 @@ Each pair of ancestral protein sequences between two sets are converted into qua
 
 You can try this out in a docker instance. This will setup the Mongo database and the Flask application.
 
+With docker running ->
+
 ```
 git clone https://github.com/gabe-foley-thesis/ancestral_agreement
 cd ancestral_agreement
