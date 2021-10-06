@@ -5,7 +5,7 @@ Ancestral Agreement is a method, inspired by Bland-Altman plots, for comparing t
 
 Each pair of ancestral protein sequences between two sets are converted into quantitative predictions for a range of metrics and the differences between sets are plotted against the evolutionary age of each ancestor. Results are easily interpretable and highlight whether particular methods consistently disagree, whether specific nodes are inconsistently inferred, and specific evolutionary times beyond which methods start to diverge.
 
-<img src="https://raw.githubusercontent.com/gabefoley/ancestral_agreement/main/images/ancestral_agreement_gui.png" width="800">
+<img src="https://raw.githubusercontent.com/gabe-foley-thesis/ancestral_agreement/main/aa/static/images/ancestral_agreement_gui.png" width="800">
 
 
 
