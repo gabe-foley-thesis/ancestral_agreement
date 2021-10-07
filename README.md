@@ -37,11 +37,10 @@ pip install -r requirements.txt
 
 ```
 python aa/routes.py
-
 ```
 
 
-You can now open a web browser and go to localhost:5000 - 
+You can now open a web browser and go to http://localhost:5000 - 
 
 This gives you the upload form which you can enter your data into.
 
@@ -53,7 +52,7 @@ See /files/test_6_1.aln, test_6_2.aln, and test_6.nwk for the expected format.
 
 There is an example data set for a CYP2U1 ancestral reconstruction using either GRASP or FastML. It gets loaded automatically into the Mongo database when you run the app.
 
-If you just want to view the example data then navigate to localhost:5000/dash and it will load automatically. Just select the two data sets from the dropdown menus.
+If you just want to view the example data then navigate to http://localhost:5000/dash and it will load automatically. Just select the two data sets from the dropdown menus.
 
 
 # Notes
