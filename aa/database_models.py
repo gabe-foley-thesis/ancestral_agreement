@@ -6,7 +6,7 @@ from mongoengine import *
 
 class DataStore(DynamicDocument):
     session_token = StringField(max_length=200, required=True)
-    data_dict = DictField()
+    data = DictField()
     names = ListField()
     age_order = ListField()
     ages = ListField()

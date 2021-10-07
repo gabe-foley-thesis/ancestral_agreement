@@ -32,6 +32,8 @@ from models import UploadForm
 
 from tree_plot import TreePlot
 
+import pickle
+
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 app_dash = dash.Dash(
@@ -52,6 +54,12 @@ db = MongoEngine(app)
 connect(configs.mongoconfig.MONGODB_DB)
 
 app_dash.scripts.config.serve_locally = True
+
+# Write small example data to the database
+import example_data
+
+
+
 
 
 def parse_contents(contents, filename, date):
@@ -328,8 +336,16 @@ def update_tree(master_data, first_dataset, second_dataset, metric):
         curr_data = DataStore.objects().get(session_token=session["data_generated"])
 
     curr_tree_plot = TreePlot(curr_data.tree_path)
+    curr_aa_plot = ancestral_agreement_plot.AncestralAgreementPlot(
+        curr_data.tree_path)
 
     traces = []
+
+    print ('Master data')
+    print (master_data)
+
+    print ('Curr AA plot node names')
+    print (curr_aa_plot.node_names)
 
     if not master_data:
         highlight_nodes = ["green" for x in curr_tree_plot.colour]
@@ -346,6 +362,8 @@ def update_tree(master_data, first_dataset, second_dataset, metric):
                 highlight_nodes[curr_tree_plot.tree_nodes[node_name]] = "red"
 
             else:
+
+                print (node_name + ' wasn not in there')
 
                 raise PreventUpdate
 
@@ -571,6 +589,7 @@ def index():
             tree_path=tree_path,
         )
         data_store.save()
+
         current_data = DataStore.objects().get(session_token=session_token)
 
         return redirect(url_for("/dash/"))
@@ -607,7 +626,6 @@ def save_files(uploads):
     path_dict = {}
 
     for path, file in uploads.items():
-        print("hekki firax")
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         path_dict[path] = filename
